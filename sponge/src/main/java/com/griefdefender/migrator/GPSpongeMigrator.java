@@ -39,7 +39,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -58,26 +57,29 @@ public class GPSpongeMigrator {
 
     private static GPSpongeMigrator instance;
     public PermissionService permissionService = GriefDefenderPlugin.getInstance().permissionService;
-    final Path GP_GLOBAL_PLAYER_DATA_PATH = Paths.get("config", "griefprevention", "GlobalPlayerData");
-    final Path GP_CLAIM_DATA_PATH = Paths.get("config", "griefprevention", "worlds");
-    final Path GD_DATA_ROOT_PATH = Paths.get("config", "griefdefender");
+    final Path GD_DATA_ROOT_PATH = GriefDefenderPlugin.getInstance().getConfigPath();
+    final Path GD_GLOBAL_PLAYER_DATA_PATH = GD_DATA_ROOT_PATH.resolve("GlobalPlayerData");
+    final Path GD_CLAIM_DATA_PATH = GD_DATA_ROOT_PATH.resolve("worlds");
+    final Path GP_DATA_ROOT_PATH = GD_DATA_ROOT_PATH.getParent().resolve("griefprevention");
+    final Path GP_GLOBAL_PLAYER_DATA_PATH = GP_DATA_ROOT_PATH.resolve("GlobalPlayerData");
+    final Path GP_CLAIM_DATA_PATH = GP_DATA_ROOT_PATH.resolve("worlds");
 
     public void migrateData() {
         try {
             if (Files.exists(GP_GLOBAL_PLAYER_DATA_PATH)) {
                 if (Files.isDirectory(GP_GLOBAL_PLAYER_DATA_PATH)) {
-                    FileUtils.copyDirectory(GP_GLOBAL_PLAYER_DATA_PATH.toFile(), GD_DATA_ROOT_PATH.resolve("GlobalPlayerData").toFile(), true);
+                    FileUtils.copyDirectory(GP_GLOBAL_PLAYER_DATA_PATH.toFile(), GD_GLOBAL_PLAYER_DATA_PATH.toFile(), true);
                 } else {
                     // Support symlinks
-                    FileUtils.copyFile(GP_GLOBAL_PLAYER_DATA_PATH.toFile(), GD_DATA_ROOT_PATH.resolve("GlobalPlayerData").toFile(), true);
+                    FileUtils.copyFile(GP_GLOBAL_PLAYER_DATA_PATH.toFile(), GD_GLOBAL_PLAYER_DATA_PATH.toFile(), true);
                 }
             }
-            FileUtils.copyDirectory(GP_CLAIM_DATA_PATH.toFile(), GD_DATA_ROOT_PATH.resolve("worlds").toFile(), true);
+            FileUtils.copyDirectory(GP_CLAIM_DATA_PATH.toFile(), GD_CLAIM_DATA_PATH.toFile(), true);
         } catch (IOException e1) {
             e1.printStackTrace();
         }
-        final File dataPath = GD_DATA_ROOT_PATH.resolve("worlds").toFile();
-        final File[] files = dataPath.listFiles();
+        //final File dataPath = GD_CLAIM_DATA_PATH.toFile();
+        //final File[] files = dataPath.listFiles();
 
         GriefDefenderPlugin.getInstance().executor.execute(() -> {
             final CompletableFuture<Set<String>> future = permissionService.getGroupSubjects().getAllIdentifiers();
@@ -153,8 +155,7 @@ public class GPSpongeMigrator {
     }
 
     private void migrateFolderData(File[] files) {
-        for (int i = 0; i < files.length; i++) {
-            File file = files[i];
+        for (File file : files) {
             if (file.isDirectory()) {
                 migrateFolderData(file.listFiles());
             }
@@ -338,7 +339,7 @@ public class GPSpongeMigrator {
         String sourcePart = parts.length > 1 ? parts[1] : null;
         if (sourcePart != null) {
             // handle source
-            String sourceParts[] = sourcePart.split("\\.");
+            String[] sourceParts = sourcePart.split("\\.");
             String sourceId = sourceParts[0];
             if (sourceParts.length > 1) {
                 String value = sourceParts[1];
@@ -372,7 +373,7 @@ public class GPSpongeMigrator {
         }
 
         // Handle target
-        String targetParts[] = targetPart.split("\\.");
+        String[] targetParts = targetPart.split("\\.");
         String targetId = targetParts[0];
         if (targetParts.length > 1) {
             String value = targetParts[1];

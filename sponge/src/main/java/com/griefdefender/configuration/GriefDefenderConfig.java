@@ -141,10 +141,9 @@ public class GriefDefenderConfig<T extends ConfigBase> {
 
     public void load() throws IOException, ObjectMappingException {
         // load settings from file
-        CommentedConfigurationNode loadedNode = this.loader.load();
 
         // store "what's in the file" separately in memory
-        this.fileData = loadedNode;
+        this.fileData = this.loader.load();
 
         // make a copy of the file data
         this.data = this.fileData.copy();
