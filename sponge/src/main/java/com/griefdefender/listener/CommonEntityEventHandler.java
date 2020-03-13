@@ -120,7 +120,6 @@ public class CommonEntityEventHandler {
         GDTimings.ENTITY_MOVE_EVENT.startTimingIfSync();
         Player player = null;
         GDPermissionUser user = null;
-        boolean onMount = false;
         if (targetEntity instanceof Player) {
             player = (Player) targetEntity;
             user = PermissionHolderCache.getInstance().getOrCreateUser(player);
@@ -129,7 +128,6 @@ public class CommonEntityEventHandler {
             if (controller != null && controller instanceof Player) {
                 player = (Player) controller;
                 user = PermissionHolderCache.getInstance().getOrCreateUser(player);
-                onMount = true;
             } else {
                 user = PermissionHolderCache.getInstance().getOrCreateUser(targetEntity.getCreator().orElse(null));
             }
@@ -330,21 +328,6 @@ public class CommonEntityEventHandler {
             }
 
             if (player != null) {
-			    if (GDFlags.ENTITY_RIDING && onMount) {
-                    if (GDPermissionManager.getInstance().getFinalPermission(event, targetEntity.getLocation(), toClaim, Flags.ENTITY_RIDING, player, targetEntity, player, TrustTypes.ACCESSOR, true) == Tristate.FALSE) {
-                        event.setCancelled(true);
-                        Location<World> safeLocation = Sponge.getGame().getTeleportHelper()
-                                .getSafeLocation(fromLocation, 80, 0)
-                                .orElseGet(() -> Sponge.getGame().getTeleportHelper()
-                                        .getSafeLocation(fromLocation, 80, 6)
-                                        .orElse(world.getSpawnLocation())
-                                );
-                        targetEntity.getBaseVehicle().clearPassengers();
-                        player.setTransform(player.getTransform().setLocation(safeLocation));
-                        GDTimings.ENTITY_MOVE_EVENT.stopTimingIfSync();
-                        return false;
-                    }
-                }
                 final GDPlayerData playerData = user.getInternalPlayerData();
                 final boolean showGpPrefix = GriefDefenderPlugin.getGlobalConfig().getConfig().message.enterExitShowGdPrefix;
                 playerData.lastClaim = new WeakReference<>(toClaim);
@@ -499,13 +482,6 @@ public class CommonEntityEventHandler {
             player.offer(Keys.CAN_FLY, false);
             player.offer(Keys.IS_FLYING, false);
             playerData.ignoreFallDamage = true;
-            Location<World> safeLocation = Sponge.getGame().getTeleportHelper()
-                    .getSafeLocation(player.getLocation(), 80, 0)
-                    .orElseGet(() -> Sponge.getGame().getTeleportHelper()
-                            .getSafeLocation(player.getLocation(), 80, 6)
-                            .orElse(player.getWorld().getSpawnLocation())
-                    );
-            player.setTransform(player.getTransform().setLocation(safeLocation));
             GriefDefenderPlugin.sendMessage(player, MessageCache.getInstance().OPTION_APPLY_PLAYER_DENY_FLIGHT);
         }
     }
